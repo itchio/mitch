@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -206,14 +208,44 @@ func (s *server) serve() {
 				f := r.store.CDNFiles[path]
 				if f == nil {
 					Throw(404, "not found")
-				} else {
-					r.Header().Set("content-type", "application/octet-stream")
-					r.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=%q", f.Filename))
-					r.status = 200
-					r.WriteHeader()
-					src := bytes.NewReader(f.Contents)
-					io.Copy(r.w, src)
 				}
+
+				contentLength := f.Size
+				rangeHeader := r.req.Header.Get("Range")
+				data := f.Contents
+				if rangeHeader == "" {
+					r.status = 200
+				} else {
+					rangeTokens := strings.Split(rangeHeader, "=")
+					byteTokens := strings.Split(rangeTokens[1], "-")
+
+					start := int64(0)
+					if startVal, err := strconv.ParseInt(byteTokens[0], 10, 64); err == nil {
+						start = startVal
+					}
+					end := f.Size - 1
+					if endVal, err := strconv.ParseInt(byteTokens[1], 10, 64); err == nil {
+						end = endVal
+					}
+
+					// note that the server will return internal error if the range is invalid
+					data = data[start : end+1]
+					contentLength = end + 1 - start
+					r.status = 206
+					r.Header().Set("content-range", fmt.Sprintf("bytes %d-%d/%d", start, end, f.Size))
+				}
+
+				r.Header().Set("content-length", fmt.Sprintf("%d", contentLength))
+				r.Header().Set("accept-range", "bytes")
+				r.Header().Set("content-type", "application/octet-stream")
+				r.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=%q", f.Filename))
+				r.Header().Set("connection", "close")
+				r.WriteHeader()
+
+				src := bytes.NewReader(data)
+				log.Printf("Serving %s", f.Filename)
+				io.Copy(r.w, src)
+				log.Printf("Serving %s (done)", f.Filename)
 			},
 		})
 	})

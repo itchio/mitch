@@ -19,11 +19,12 @@ func FormatUser(user *User) Any {
 
 func FormatGame(game *Game) Any {
 	res := Any{
-		"id":        game.ID,
-		"user_id":   game.UserID,
-		"title":     game.Title,
-		"min_price": game.MinPrice,
-		"type":      game.Type,
+		"id":             game.ID,
+		"user_id":        game.UserID,
+		"title":          game.Title,
+		"min_price":      game.MinPrice,
+		"type":           game.Type,
+		"classification": game.Classification,
 	}
 	return res
 }
@@ -38,6 +39,17 @@ func FormatUpload(upload *Upload) Any {
 		"filename": upload.Filename,
 		"url":      upload.URL,
 	}
+	platforms := Any{}
+	if upload.PlatformLinux {
+		platforms["linux"] = "all"
+	}
+	if upload.PlatformWindows {
+		platforms["windows"] = "all"
+	}
+	if upload.PlatformMac {
+		platforms["osx"] = "all"
+	}
+	res["platforms"] = platforms
 	return res
 }
 

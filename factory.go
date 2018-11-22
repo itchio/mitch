@@ -40,11 +40,12 @@ func (u *User) MakeGame(title string) *Game {
 	defer s.writeMutex.Unlock()
 
 	game := &Game{
-		Store:  s,
-		ID:     s.serial(),
-		Type:   "default",
-		UserID: u.ID,
-		Title:  title,
+		Store:          s,
+		ID:             s.serial(),
+		Type:           "default",
+		Classification: "game",
+		UserID:         u.ID,
+		Title:          title,
 	}
 	s.Games[game.ID] = game
 	return game

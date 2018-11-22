@@ -4,6 +4,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"io"
+	"math/rand"
+
+	"github.com/itchio/wharf/wrand"
 )
 
 type ArchiveContext struct {
@@ -41,10 +44,17 @@ type ArchiveEntry struct {
 	buf  bytes.Buffer
 }
 
+var _ io.Writer = (*ArchiveEntry)(nil)
+
 func (ae *ArchiveEntry) String(s string) {
 	ae.buf.WriteString(s)
 }
 
-func (ae *ArchiveEntry) Bytes(p []byte) {
-	ae.buf.Write(p)
+func (ae *ArchiveEntry) Random(seed int64, size int64) {
+	rr := &wrand.RandReader{rand.NewSource(0xfaceface)}
+	io.CopyN(ae, rr, size)
+}
+
+func (ae *ArchiveEntry) Write(p []byte) (int, error) {
+	return ae.buf.Write(p)
 }

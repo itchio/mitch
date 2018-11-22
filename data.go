@@ -56,12 +56,13 @@ type APIKey struct {
 type Game struct {
 	Store *Store
 
-	Type      string
-	ID        int64
-	UserID    int64
-	Title     string
-	MinPrice  int64
-	Published bool
+	Type           string
+	Classification string
+	ID             int64
+	UserID         int64
+	Title          string
+	MinPrice       int64
+	Published      bool
 }
 
 type Upload struct {
