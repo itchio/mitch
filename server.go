@@ -208,6 +208,7 @@ func (s *server) serve() {
 					Throw(404, "not found")
 				} else {
 					r.Header().Set("content-type", "application/octet-stream")
+					r.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=%q", f.Filename))
 					r.status = 200
 					r.WriteHeader()
 					src := bytes.NewReader(f.Contents)

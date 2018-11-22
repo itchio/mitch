@@ -84,10 +84,10 @@ func (u *Upload) SetZipContents() {
 func (u *Upload) SetZipContentsCustom(f func(ac *ArchiveContext)) {
 	ac := &ArchiveContext{
 		Entries: make(map[string]*ArchiveEntry),
+		Name:    fmt.Sprintf("upload-%d.zip", u.ID),
 	}
 	f(ac)
-	filename := fmt.Sprintf("upload-%d.zip", u.ID)
-	u.SetHostedContents(filename, ac.CompressZip())
+	u.SetHostedContents(ac.Name, ac.CompressZip())
 }
 
 func (u *Upload) SetHostedContents(filename string, contents []byte) {

@@ -30,11 +30,13 @@ func FormatGame(game *Game) Any {
 
 func FormatUpload(upload *Upload) Any {
 	res := Any{
-		"id":      upload.ID,
-		"game_id": upload.GameID,
-		"type":    upload.Type,
-		"storage": upload.Storage,
-		"size":    upload.Size,
+		"id":       upload.ID,
+		"game_id":  upload.GameID,
+		"type":     upload.Type,
+		"storage":  upload.Storage,
+		"size":     upload.Size,
+		"filename": upload.Filename,
+		"url":      upload.URL,
 	}
 	return res
 }

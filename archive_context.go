@@ -7,7 +7,12 @@ import (
 )
 
 type ArchiveContext struct {
+	Name    string
 	Entries map[string]*ArchiveEntry
+}
+
+func (ac *ArchiveContext) SetName(name string) {
+	ac.Name = name
 }
 
 func (ac *ArchiveContext) Entry(path string) *ArchiveEntry {
