@@ -1,9 +1,6 @@
 package mitch
 
 import (
-	"fmt"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 )
@@ -11,6 +8,11 @@ import (
 type Store struct {
 	Users   map[int64]*User
 	APIKeys map[int64]*APIKey
+	Games   map[int64]*Game
+	Uploads map[int64]*Upload
+	Builds  map[int64]*Build
+
+	CDNFiles map[string]*CDNFile
 
 	idSeed     int64
 	writeMutex sync.Mutex
@@ -20,7 +22,12 @@ func newStore() *Store {
 	return &Store{
 		Users:   make(map[int64]*User),
 		APIKeys: make(map[int64]*APIKey),
-		idSeed:  10,
+		Games:   make(map[int64]*Game),
+		Uploads: make(map[int64]*Upload),
+		Builds:  make(map[int64]*Build),
+
+		CDNFiles: make(map[string]*CDNFile),
+		idSeed:   10,
 	}
 }
 
@@ -47,101 +54,54 @@ type APIKey struct {
 }
 
 type Game struct {
-	ID int64
+	Store *Store
+
+	Type      string
+	ID        int64
+	UserID    int64
+	Title     string
+	MinPrice  int64
+	Published bool
 }
 
 type Upload struct {
-	ID     int64
-	GameID int64
+	Store *Store
+
+	ID          int64
+	GameID      int64
+	Filename    string
+	URL         string
+	Size        int64
+	ChannelName string
+	Storage     string
+	Head        int64
+	Type        string
+
+	PlatformWindows bool
+	PlatformLinux   bool
+	PlatformMac     bool
 }
 
 type Build struct {
+	Store *Store
+
 	ID       int64
 	UploadID int64
 }
 
-func (s *Store) FindAPIKeysByKey(key string) *APIKey {
-	for _, k := range s.APIKeys {
-		if k.Key == key {
-			return k
-		}
-	}
-	return nil
+type BuildFile struct {
+	Store *Store
+
+	ID      int64
+	BuildID int64
+	Type    string
+	SubType string
+	Status  string
 }
 
-func (s *Store) ListAPIKeysByUser(userID int64) []*APIKey {
-	var res []*APIKey
-	for _, k := range s.APIKeys {
-		if k.UserID == userID {
-			res = append(res, k)
-		}
-	}
-	return res
-}
-
-func (s *Store) FindUser(id int64) *User {
-	return s.Users[id]
-}
-
-func (s *Store) MakeUser(displayName string) *User {
-	s.writeMutex.Lock()
-	defer s.writeMutex.Unlock()
-
-	user := &User{
-		Store:       s,
-		ID:          s.serial(),
-		Username:    s.slugify(displayName),
-		DisplayName: displayName,
-		Gamer:       true,
-	}
-	s.Users[user.ID] = user
-	return user
-}
-
-func (u *User) MakeAPIKey() *APIKey {
-	s := u.Store
-	s.writeMutex.Lock()
-	defer s.writeMutex.Unlock()
-
-	apiKey := &APIKey{
-		Store:  s,
-		ID:     s.serial(),
-		UserID: u.ID,
-		Key:    fmt.Sprintf("%s-api-key", u.Username),
-	}
-	s.APIKeys[apiKey.ID] = apiKey
-	return apiKey
-}
-
-func (s *Store) serial() int64 {
-	s.idSeed += 100
-	return s.idSeed
-}
-
-var (
-	invalidUsernameChars = regexp.MustCompile("^[A-Za-z0-9_]")
-)
-
-func (s *Store) slugify(input string) string {
-	var res = input
-	res = strings.ToLower(res)
-	res = invalidUsernameChars.ReplaceAllString(res, "_")
-	return res
-}
-
-func FormatUser(user *User) Any {
-	res := Any{
-		"id":           user.ID,
-		"gamer":        user.Gamer,
-		"developer":    user.Developer,
-		"press_user":   user.PressUser,
-		"display_name": user.DisplayName,
-		"username":     user.Username,
-		"url":          "http://example.org",
-		"cover_url":    "http://example.org",
-	}
-	if user.AllowTelemetry {
-		res["allow_telemetry"] = true
-	}
-	return res
+type CDNFile struct {
+	Path     string
+	Filename string
+	Size     int64
+	Contents []byte
 }

@@ -1,11 +1,15 @@
 package mitch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
@@ -81,13 +85,18 @@ func (s *server) Store() *Store {
 	return s.store
 }
 
-type coolHandler func(r *response) error
+type coolHandler func(r *response)
 
 func (s *server) serve() {
 	m := mux.NewRouter()
 	handler := func(ch coolHandler) http.HandlerFunc {
 		return func(w http.ResponseWriter, req *http.Request) {
-			res := &response{s: s, w: w, req: req}
+			res := &response{
+				s:     s,
+				w:     w,
+				req:   req,
+				store: s.store,
+			}
 			err := func() (retErr error) {
 				defer func() {
 					if r := recover(); r != nil {
@@ -103,7 +112,8 @@ func (s *server) serve() {
 						}
 					}
 				}()
-				return ch(res)
+				ch(res)
+				return nil
 			}()
 			if err != nil {
 				res.WriteError(500, fmt.Sprintf("internal error: %+v", err))
@@ -117,16 +127,98 @@ func (s *server) serve() {
 		m.PathPrefix(prefix).Handler(handler(ch))
 	}
 
-	route("/profile", func(r *response) error {
-		r.CheckAPIKey()
-		r.WriteJSON(Any{
-			"user": FormatUser(r.currentUser),
+	route("/profile", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				r.WriteJSON(Any{
+					"user": FormatUser(r.currentUser),
+				})
+			},
 		})
-		return nil
 	})
-	routePrefix("/", func(r *response) error {
-		r.WriteError(404, "invalid api endpoint")
-		return nil
+
+	route("/games/{id}", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				gameID := r.Int64Var("id")
+				game := r.store.FindGame(gameID)
+				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
+				r.WriteJSON(Any{
+					"game": FormatGame(game),
+				})
+			},
+		})
+	})
+
+	route("/games/{id}/uploads", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				gameID := r.Int64Var("id")
+				game := r.store.FindGame(gameID)
+				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
+				uploads := r.store.ListUploadsByGame(gameID)
+				r.WriteJSON(Any{
+					"uploads": FormatUploads(uploads),
+				})
+			},
+		})
+	})
+
+	route("/games/{id}/download-sessions", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"POST": func() {
+				r.CheckAPIKey()
+				gameID := r.Int64Var("id")
+				game := r.store.FindGame(gameID)
+				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
+				r.WriteJSON(Any{
+					"uuid": uuid.New().String(),
+				})
+			},
+		})
+	})
+
+	route("/uploads/{id}/download", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				uploadID := r.Int64Var("id")
+				upload := r.store.FindUpload(uploadID)
+				r.AssertAuthorization(upload.CanBeDownloadedBy(r.currentUser))
+				switch upload.Storage {
+				case "hosted":
+					r.RedirectTo(s.makeURL("/@cdn%s", upload.CDNPath()))
+				default:
+					Throw(500, "unsupported storage")
+				}
+			},
+		})
+	})
+
+	routePrefix("/@cdn", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				path := r.req.URL.Path
+				path = strings.TrimPrefix(path, "/@cdn")
+				f := r.store.CDNFiles[path]
+				if f == nil {
+					Throw(404, "not found")
+				} else {
+					r.Header().Set("content-type", "application/octet-stream")
+					r.status = 200
+					r.WriteHeader()
+					src := bytes.NewReader(f.Contents)
+					io.Copy(r.w, src)
+				}
+			},
+		})
+	})
+
+	routePrefix("/", func(r *response) {
+		Throw(404, "invalid api endpoint")
 	})
 
 	http.Serve(s.listener, m)

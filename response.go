@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type response struct {
@@ -11,6 +14,7 @@ type response struct {
 	w      http.ResponseWriter
 	req    *http.Request
 	status int
+	store  *Store
 
 	currentUser *User
 }
@@ -69,8 +73,41 @@ func (r *response) WriteHeader() {
 	r.w.WriteHeader(status)
 }
 
+type RespondToMap map[string]func()
+
+var (
+	validRespondToMethods = map[string]bool{
+		"GET":  true,
+		"POST": true,
+	}
+)
+
+func (r *response) RespondTo(m RespondToMap) {
+	for k := range m {
+		if !validRespondToMethods[k] {
+			Throw(500, fmt.Sprintf("handler is trying to handle invalid method %s", k))
+		}
+	}
+
+	if h, ok := m[r.req.Method]; ok {
+		h()
+	} else {
+		Throw(400, "invalid method")
+	}
+}
+
 func (r *response) Write(p []byte) {
 	r.w.Write(p)
+}
+
+func (r *response) Int64Var(name string) int64 {
+	res, err := strconv.ParseInt(r.Var(name), 10, 64)
+	must(err)
+	return res
+}
+
+func (r *response) Var(name string) string {
+	return mux.Vars(r.req)[name]
 }
 
 func (r *response) CheckAPIKey() {
@@ -91,4 +128,22 @@ func (r *response) CheckAPIKey() {
 	if r.currentUser == nil {
 		Throw(500, "api key has no user")
 	}
+}
+
+func (r *response) AssertAuthorization(authorized bool) {
+	if !authorized {
+		Throw(403, "forbidden")
+	}
+}
+
+func (r *response) RedirectTo(url string) {
+	r.Header().Set("Location", url)
+	r.status = 302
+	r.WriteHeader()
+}
+
+func (s *server) makeURL(format string, args ...interface{}) string {
+	path := fmt.Sprintf(format, args...)
+	url := fmt.Sprintf("http://%s%s", s.Address().String(), path)
+	return url
 }
