@@ -1,10 +1,7 @@
 package mitch
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
-	"io"
 )
 
 func (s *Store) MakeUser(displayName string) *User {
@@ -79,18 +76,24 @@ func (u *Upload) SetAllPlatforms() {
 }
 
 func (u *Upload) SetZipContents() {
+	u.SetZipContentsCustom(func(ac *ArchiveContext) {
+		ac.Entry("hello.txt").String("Just a test file")
+	})
+}
+
+func (u *Upload) SetZipContentsCustom(f func(ac *ArchiveContext)) {
+	ac := &ArchiveContext{
+		Entries: make(map[string]*ArchiveEntry),
+	}
+	f(ac)
+	filename := fmt.Sprintf("upload-%d.zip", u.ID)
+	u.SetHostedContents(filename, ac.CompressZip())
+}
+
+func (u *Upload) SetHostedContents(filename string, contents []byte) {
 	u.Storage = "hosted"
-	u.Filename = fmt.Sprintf("upload-%d.zip", u.ID)
-
-	buf := new(bytes.Buffer)
-	zw := zip.NewWriter(buf)
-	w, err := zw.Create("hello.txt")
-	must(err)
-	_, err = io.WriteString(w, "Just a test file.")
-	must(err)
-	must(zw.Close())
-
-	f := u.Store.UploadCDNFile(u.CDNPath(), u.Filename, buf.Bytes())
+	u.Filename = filename
+	f := u.Store.UploadCDNFile(u.CDNPath(), u.Filename, contents)
 	u.Size = f.Size
 }
 
