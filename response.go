@@ -150,8 +150,32 @@ func (r *response) FindGame(gameID int64) *Game {
 	return game
 }
 
-func (s *server) makeURL(format string, args ...interface{}) string {
+func (r *response) FindUpload(uploadID int64) *Upload {
+	upload := r.store.FindUpload(uploadID)
+	if upload == nil {
+		Throw(404, "upload not found")
+	}
+	return upload
+}
+
+func (r *response) FindBuild(buildID int64) *Build {
+	build := r.store.FindBuild(buildID)
+	if build == nil {
+		Throw(404, "build not found")
+	}
+	return build
+}
+
+func (r *response) makeURL(format string, args ...interface{}) string {
 	path := fmt.Sprintf(format, args...)
-	url := fmt.Sprintf("http://%s%s", s.Address().String(), path)
+	url := fmt.Sprintf("http://%s%s", r.s.Address().String(), path)
 	return url
+}
+
+type cdnAsset interface {
+	CDNPath() string
+}
+
+func (r *response) ServeCDNAsset(ass cdnAsset) {
+	r.RedirectTo(r.makeURL("/@cdn%s", ass.CDNPath()))
 }

@@ -8,8 +8,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+
+	"github.com/gorilla/handlers"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -188,14 +191,43 @@ func (s *server) serve() {
 			"GET": func() {
 				r.CheckAPIKey()
 				uploadID := r.Int64Var("id")
-				upload := r.store.FindUpload(uploadID)
+				upload := r.FindUpload(uploadID)
 				r.AssertAuthorization(upload.CanBeDownloadedBy(r.currentUser))
 				switch upload.Storage {
 				case "hosted":
-					r.RedirectTo(s.makeURL("/@cdn%s", upload.CDNPath()))
+					r.ServeCDNAsset(upload)
+				case "build":
+					build := r.FindBuild(upload.Head)
+					archive := build.GetFile("archive", "default")
+					if archive == nil {
+						Throw(404, "no archive for build")
+					}
+					r.ServeCDNAsset(archive)
 				default:
 					Throw(500, "unsupported storage")
 				}
+			},
+		})
+	})
+
+	route("/builds/{id}/download/{type}/{subtype}", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+
+				buildID := r.Int64Var("id")
+				build := r.FindBuild(buildID)
+				upload := r.FindUpload(build.UploadID)
+				r.AssertAuthorization(upload.CanBeDownloadedBy(r.currentUser))
+
+				typ := r.Var("type")
+				subtype := r.Var("subtype")
+				bf := build.GetFile(typ, subtype)
+				if bf == nil {
+					log.Printf("no build file found for %s/%s for build %d", typ, subtype, build.ID)
+					Throw(404, fmt.Sprintf("no %s/%s build file", typ, subtype))
+				}
+				r.ServeCDNAsset(bf)
 			},
 		})
 	})
@@ -254,5 +286,6 @@ func (s *server) serve() {
 		Throw(404, "invalid api endpoint")
 	})
 
-	http.Serve(s.listener, m)
+	loggedM := handlers.LoggingHandler(os.Stdout, m)
+	http.Serve(s.listener, loggedM)
 }

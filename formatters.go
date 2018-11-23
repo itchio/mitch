@@ -50,6 +50,13 @@ func FormatUpload(upload *Upload) Any {
 		platforms["osx"] = "all"
 	}
 	res["platforms"] = platforms
+
+	build := upload.Store.FindBuild(upload.Head)
+	if build != nil {
+		res["build"] = FormatBuild(build)
+		res["channel_name"] = upload.ChannelName
+	}
+
 	return res
 }
 
@@ -57,6 +64,15 @@ func FormatUploads(uploads []*Upload) []Any {
 	var res []Any
 	for _, u := range uploads {
 		res = append(res, FormatUpload(u))
+	}
+	return res
+}
+
+func FormatBuild(build *Build) Any {
+	res := Any{
+		"id":        build.ID,
+		"upload_id": build.UploadID,
+		"version":   build.Version,
 	}
 	return res
 }

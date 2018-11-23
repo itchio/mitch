@@ -133,6 +133,7 @@ func (u *Upload) PushBuild(f func(ac *ArchiveContext)) {
 	u.Head = b.ID
 	u.Filename = archiveFile.Filename
 	u.Size = archiveFile.Size
+	u.ChannelName = fmt.Sprintf("upload-%d", u.ID)
 }
 
 func (b *Build) MakeFile(typ string, subtype string) *BuildFile {
@@ -148,6 +149,16 @@ func (b *Build) MakeFile(typ string, subtype string) *BuildFile {
 	}
 	s.BuildFiles[bf.ID] = bf
 	return bf
+}
+
+func (b *Build) GetFile(typ string, subtype string) *BuildFile {
+	s := b.Store
+
+	return s.SelectBuildFile(NoSort(), Eq{
+		"BuildID": b.ID,
+		"Type":    typ,
+		"SubType": subtype,
+	})
 }
 
 func (u *Upload) SetHostedContents(filename string, contents []byte) {
@@ -234,7 +245,7 @@ func compressionSettings() pwr.CompressionSettings {
 }
 
 func (b *BuildFile) CDNPath() string {
-	return fmt.Sprintf("/builds/%d", b.ID)
+	return fmt.Sprintf("/build-files/%d", b.ID)
 }
 
 func (s *Store) UploadCDNFile(path string, filename string, contents []byte) *CDNFile {
