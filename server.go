@@ -145,7 +145,7 @@ func (s *server) serve() {
 			"GET": func() {
 				r.CheckAPIKey()
 				gameID := r.Int64Var("id")
-				game := r.store.FindGame(gameID)
+				game := r.FindGame(gameID)
 				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
 				r.WriteJSON(Any{
 					"game": FormatGame(game),

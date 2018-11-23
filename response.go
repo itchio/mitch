@@ -142,6 +142,14 @@ func (r *response) RedirectTo(url string) {
 	r.WriteHeader()
 }
 
+func (r *response) FindGame(gameID int64) *Game {
+	game := r.store.FindGame(gameID)
+	if game == nil {
+		Throw(404, "game not found")
+	}
+	return game
+}
+
 func (s *server) makeURL(format string, args ...interface{}) string {
 	path := fmt.Sprintf(format, args...)
 	url := fmt.Sprintf("http://%s%s", s.Address().String(), path)

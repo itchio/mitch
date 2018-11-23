@@ -51,7 +51,7 @@ func (ae *ArchiveEntry) String(s string) {
 }
 
 func (ae *ArchiveEntry) Random(seed int64, size int64) {
-	rr := &wrand.RandReader{rand.NewSource(0xfaceface)}
+	rr := &wrand.RandReader{Source: rand.NewSource(0xfaceface)}
 	io.CopyN(ae, rr, size)
 }
 

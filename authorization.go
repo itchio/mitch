@@ -11,9 +11,16 @@ func (g *Game) CanBeViewedBy(user *User) bool {
 }
 
 func (g *Game) CanBeEditedBy(user *User) bool {
-	// TODO: game admins
+	s := g.Store
+
 	if g.UserID == user.ID {
 		return true
+	}
+	admins := s.ListGameAdminsByGame(g.ID)
+	for _, a := range admins {
+		if a.UserID == user.ID {
+			return true
+		}
 	}
 	return false
 }

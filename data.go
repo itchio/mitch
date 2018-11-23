@@ -12,6 +12,7 @@ type Store struct {
 	Uploads    map[int64]*Upload
 	Builds     map[int64]*Build
 	BuildFiles map[int64]*BuildFile
+	GameAdmins map[int64]*GameAdmin
 
 	CDNFiles map[string]*CDNFile
 
@@ -27,6 +28,7 @@ func newStore() *Store {
 		Uploads:    make(map[int64]*Upload),
 		Builds:     make(map[int64]*Build),
 		BuildFiles: make(map[int64]*BuildFile),
+		GameAdmins: make(map[int64]*GameAdmin),
 
 		CDNFiles: make(map[string]*CDNFile),
 		idSeed:   10,
@@ -105,6 +107,14 @@ type BuildFile struct {
 
 	Filename string
 	Size     int64
+}
+
+type GameAdmin struct {
+	Store *Store
+
+	ID     int64
+	GameID int64
+	UserID int64
 }
 
 type CDNFile struct {

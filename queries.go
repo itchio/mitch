@@ -36,11 +36,21 @@ func (s *Store) FindBuild(id int64) *Build {
 }
 
 func (s *Store) ListUploadsByGame(gameID int64) []*Upload {
-	var res []*Upload
-	for _, u := range s.Uploads {
-		if u.GameID == gameID {
-			res = append(res, u)
-		}
-	}
-	return res
+	return s.SelectUploads(NoSort(), Eq{"GameID": gameID})
+}
+
+func (s *Store) ListGameAdminsByGame(gameID int64) []*GameAdmin {
+	return s.SelectGameAdmins(NoSort(), Eq{"GameID": gameID})
+}
+
+// selects
+
+func (s *Store) SelectGameAdmins(vsb *ValuesSortBuilder, eq Eq) (res []*GameAdmin) {
+	s.Select(&res, vsb.ForMap(s.GameAdmins), eq)
+	return
+}
+
+func (s *Store) SelectUploads(vsb *ValuesSortBuilder, eq Eq) (res []*Upload) {
+	s.Select(&res, vsb.ForMap(s.Uploads), eq)
+	return
 }
