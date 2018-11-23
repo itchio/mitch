@@ -1,22 +1,11 @@
 package mitch
 
 func (s *Store) FindAPIKeysByKey(key string) *APIKey {
-	for _, k := range s.APIKeys {
-		if k.Key == key {
-			return k
-		}
-	}
-	return nil
+	return s.SelectAPIKey(NoSort(), Eq{"Key": key})
 }
 
 func (s *Store) ListAPIKeysByUser(userID int64) []*APIKey {
-	var res []*APIKey
-	for _, k := range s.APIKeys {
-		if k.UserID == userID {
-			res = append(res, k)
-		}
-	}
-	return res
+	return s.SelectAPIKeys(NoSort(), Eq{"UserID": userID})
 }
 
 func (s *Store) FindUser(id int64) *User {
@@ -41,16 +30,4 @@ func (s *Store) ListUploadsByGame(gameID int64) []*Upload {
 
 func (s *Store) ListGameAdminsByGame(gameID int64) []*GameAdmin {
 	return s.SelectGameAdmins(NoSort(), Eq{"GameID": gameID})
-}
-
-// selects
-
-func (s *Store) SelectGameAdmins(vsb *ValuesSortBuilder, eq Eq) (res []*GameAdmin) {
-	s.Select(&res, vsb.ForMap(s.GameAdmins), eq)
-	return
-}
-
-func (s *Store) SelectUploads(vsb *ValuesSortBuilder, eq Eq) (res []*Upload) {
-	s.Select(&res, vsb.ForMap(s.Uploads), eq)
-	return
 }
