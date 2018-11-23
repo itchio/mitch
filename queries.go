@@ -31,6 +31,10 @@ func (s *Store) FindUpload(id int64) *Upload {
 	return s.Uploads[id]
 }
 
+func (s *Store) FindBuild(id int64) *Build {
+	return s.Builds[id]
+}
+
 func (s *Store) ListUploadsByGame(gameID int64) []*Upload {
 	var res []*Upload
 	for _, u := range s.Uploads {

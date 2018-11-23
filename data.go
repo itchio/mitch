@@ -6,11 +6,12 @@ import (
 )
 
 type Store struct {
-	Users   map[int64]*User
-	APIKeys map[int64]*APIKey
-	Games   map[int64]*Game
-	Uploads map[int64]*Upload
-	Builds  map[int64]*Build
+	Users      map[int64]*User
+	APIKeys    map[int64]*APIKey
+	Games      map[int64]*Game
+	Uploads    map[int64]*Upload
+	Builds     map[int64]*Build
+	BuildFiles map[int64]*BuildFile
 
 	CDNFiles map[string]*CDNFile
 
@@ -20,11 +21,12 @@ type Store struct {
 
 func newStore() *Store {
 	return &Store{
-		Users:   make(map[int64]*User),
-		APIKeys: make(map[int64]*APIKey),
-		Games:   make(map[int64]*Game),
-		Uploads: make(map[int64]*Upload),
-		Builds:  make(map[int64]*Build),
+		Users:      make(map[int64]*User),
+		APIKeys:    make(map[int64]*APIKey),
+		Games:      make(map[int64]*Game),
+		Uploads:    make(map[int64]*Upload),
+		Builds:     make(map[int64]*Build),
+		BuildFiles: make(map[int64]*BuildFile),
 
 		CDNFiles: make(map[string]*CDNFile),
 		idSeed:   10,
@@ -86,8 +88,10 @@ type Upload struct {
 type Build struct {
 	Store *Store
 
-	ID       int64
-	UploadID int64
+	ID            int64
+	ParentBuildID int64
+	UploadID      int64
+	Version       int
 }
 
 type BuildFile struct {
@@ -98,6 +102,9 @@ type BuildFile struct {
 	Type    string
 	SubType string
 	Status  string
+
+	Filename string
+	Size     int64
 }
 
 type CDNFile struct {
