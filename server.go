@@ -295,9 +295,9 @@ func (s *server) serve() {
 				r.WriteHeader()
 
 				src := bytes.NewReader(data)
-				log.Printf("Serving %s", f.Filename)
+				r.s.Logf("Serving %s", f.Filename)
 				io.Copy(r.w, src)
-				log.Printf("Serving %s (done)", f.Filename)
+				r.s.Logf("Serving %s (done)", f.Filename)
 			},
 		})
 	})
@@ -318,4 +318,8 @@ func (s *server) serve() {
 		}
 	}()
 	http.Serve(s.listener, loggedM)
+}
+
+func (s *server) Logf(format string, args ...interface{}) {
+	s.consumer.Infof(format, args...)
 }
