@@ -1,6 +1,7 @@
 package mitch
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/handlers"
+	"github.com/itchio/wharf/state"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -30,10 +32,12 @@ type server struct {
 	listener net.Listener
 	opts     serverOpts
 	store    *Store
+	consumer *state.Consumer
 }
 
 type serverOpts struct {
-	port int
+	port     int
+	consumer *state.Consumer
 }
 
 type ServerOpt func(opts *serverOpts)
@@ -44,16 +48,32 @@ func WithPort(port int) ServerOpt {
 	}
 }
 
+func WithConsumer(consumer *state.Consumer) ServerOpt {
+	return func(opts *serverOpts) {
+		opts.consumer = consumer
+	}
+}
+
 func NewServer(ctx context.Context, options ...ServerOpt) (Server, error) {
 	var opts serverOpts
 	for _, o := range options {
 		o(&opts)
 	}
 
+	consumer := opts.consumer
+	if consumer == nil {
+		consumer = &state.Consumer{
+			OnMessage: func(lvl string, message string) {
+				log.Printf("[%s] %s", lvl, message)
+			},
+		}
+	}
+
 	s := &server{
-		ctx:   ctx,
-		opts:  opts,
-		store: newStore(),
+		ctx:      ctx,
+		opts:     opts,
+		store:    newStore(),
+		consumer: consumer,
 	}
 
 	err := s.start()
@@ -286,6 +306,16 @@ func (s *server) serve() {
 		Throw(404, "invalid api endpoint")
 	})
 
-	loggedM := handlers.LoggingHandler(os.Stdout, m)
+	pR, pW, err := os.Pipe()
+	defer pW.Close()
+	must(err)
+	loggedM := handlers.LoggingHandler(pW, m)
+	go func() {
+		consumer := s.consumer
+		s := bufio.NewScanner(pR)
+		for s.Scan() {
+			consumer.Infof(s.Text())
+		}
+	}()
 	http.Serve(s.listener, loggedM)
 }
