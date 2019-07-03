@@ -6,7 +6,7 @@ import (
 	"io"
 	"math/rand"
 
-	"github.com/itchio/wharf/wrand"
+	"github.com/itchio/randsource"
 )
 
 type ArchiveContext struct {
@@ -54,7 +54,7 @@ func (ae *ArchiveEntry) String(s string) {
 }
 
 func (ae *ArchiveEntry) Random(seed int64, size int64) {
-	rr := &wrand.RandReader{Source: rand.NewSource(seed)}
+	rr := &randsource.Reader{Source: rand.NewSource(seed)}
 	io.CopyN(ae, rr, size)
 }
 
