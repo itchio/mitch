@@ -260,6 +260,23 @@ func (s *server) serve() {
 		})
 	})
 
+	route("/builds/{id}", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				buildID := r.Int64Var("id")
+				build := r.FindBuild(buildID)
+
+				upload := r.FindUpload(build.UploadID)
+				r.AssertAuthorization(upload.CanBeDownloadedBy(r.currentUser))
+				res := Any{
+					"build": FormatBuild(build),
+				}
+				r.WriteJSON(res)
+			},
+		})
+	})
+
 	route("/builds/{id}/download/{type}/{subtype}", func(r *response) {
 		r.RespondTo(RespondToMap{
 			"GET": func() {
