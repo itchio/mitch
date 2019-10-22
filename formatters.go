@@ -30,6 +30,13 @@ func FormatUserGameSession(s *UserGameSession) Any {
 	}
 }
 
+func FormatUserGameSummary() Any {
+	return Any{
+		"seconds_run": 0,
+		"last_run_at": time.Now(),
+	}
+}
+
 func FormatGame(game *Game) Any {
 	res := Any{
 		"id":             game.ID,

@@ -137,6 +137,7 @@ func (s *server) serve() {
 						}
 					}
 				}()
+				must(req.ParseForm())
 				ch(res)
 				return nil
 			}()
@@ -167,17 +168,17 @@ func (s *server) serve() {
 		r.RespondTo(RespondToMap{
 			"POST": func() {
 				r.CheckAPIKey()
-				body := r.GetBody()
 
 				s := &UserGameSession{
 					ID:         r.store.serial(),
-					GameID:     body["game_id"].(int64),
+					GameID:     r.Int64Param("game_id"),
 					UserID:     r.currentUser.ID,
 					Crashed:    false,
 					SecondsRun: 0,
 				}
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
+					"summary":           FormatUserGameSummary(),
 				})
 			},
 		})
@@ -197,6 +198,7 @@ func (s *server) serve() {
 				r.AssertAuthorization(s.CanBeViewedBy(r.currentUser))
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
+					"summary":           FormatUserGameSummary(),
 				})
 			},
 			"POST": func() {
@@ -209,13 +211,13 @@ func (s *server) serve() {
 				}
 
 				r.AssertAuthorization(s.CanBeViewedBy(r.currentUser))
-				body := r.GetBody()
-				if sr, ok := body["seconds_run"].(int64); ok {
+				if sr := r.Int64Param("seconds_run"); sr != 0 {
 					s.SecondsRun = sr
 				}
 
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
+					"summary":           FormatUserGameSummary(),
 				})
 			},
 		})
@@ -413,64 +415,6 @@ func (s *server) serve() {
 					},
 				}
 				r.WriteJSON(res)
-			},
-		})
-	})
-
-	fakeSummary := func() Any {
-		return Any{
-			"seconds_run": 0,
-			"last_run_at": nil,
-		}
-	}
-
-	fakeGameSession := func() Any {
-		return Any{
-			"id":          666,
-			"seconds_run": 0,
-			"last_run_at": nil,
-		}
-	}
-
-	route("/games/{id}/interactions/sessions", func(r *response) {
-		r.RespondTo(RespondToMap{
-			"POST": func() {
-				r.CheckAPIKey()
-				id := r.Int64Var("id")
-				game := r.FindGame(id)
-				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
-
-				r.WriteJSON(Any{
-					"summary":           fakeSummary(),
-					"user_game_session": fakeGameSession(),
-				})
-			},
-			"GET": func() {
-				r.CheckAPIKey()
-				id := r.Int64Var("id")
-				game := r.FindGame(id)
-				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
-
-				r.WriteJSON(Any{
-					"summary":  fakeSummary(),
-					"sessions": make([]Any, 0),
-				})
-			},
-		})
-	})
-
-	route("/games/{id}/interactions/sessions", func(r *response) {
-		r.RespondTo(RespondToMap{
-			"POST": func() {
-				r.CheckAPIKey()
-				id := r.Int64Var("id")
-				game := r.FindGame(id)
-				r.AssertAuthorization(game.CanBeViewedBy(r.currentUser))
-
-				r.WriteJSON(Any{
-					"summary":  fakeSummary(),
-					"sessions": make([]Any, 0),
-				})
 			},
 		})
 	})

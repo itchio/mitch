@@ -3,12 +3,16 @@ package mitch
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
 )
+
+var DEBUG = os.Getenv("MITCH_DEBUG") == "1"
 
 type response struct {
 	s      *server
@@ -63,6 +67,7 @@ func (r *response) WriteJSON(payload interface{}) {
 	if err != nil {
 		panic(err)
 	}
+	debugf("Replying with JSON payload: %s", string(bs))
 
 	r.Write(bs)
 }
@@ -136,12 +141,18 @@ func (r *response) CheckAPIKey() {
 	}
 }
 
-func (r *response) GetBody() Any {
-	body, err := ioutil.ReadAll(r.req.Body)
+func (r *response) Params() url.Values {
+	return r.req.Form
+}
+
+func (r *response) Param(key string) string {
+	return r.req.Form.Get(key)
+}
+
+func (r *response) Int64Param(key string) int64 {
+	res, err := strconv.ParseInt(r.Param(key), 10, 64)
 	must(err)
-	var payload Any
-	must(json.Unmarshal(body, &payload))
-	return payload
+	return res
 }
 
 func (r *response) AssertAuthorization(authorized bool) {
@@ -192,4 +203,10 @@ type cdnAsset interface {
 
 func (r *response) ServeCDNAsset(ass cdnAsset) {
 	r.RedirectTo(r.makeURL("/@cdn%s", ass.CDNPath()))
+}
+
+func debugf(s string, a ...interface{}) {
+	if DEBUG {
+		log.Printf("[mitch] %s", fmt.Sprintf(s, a...))
+	}
 }
