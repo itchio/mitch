@@ -163,6 +163,15 @@ func (s *server) serve() {
 		})
 	})
 
+	route("/profile/game-sessions", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"POST": func() {
+				r.CheckAPIKey()
+				r.WriteEmpty()
+			},
+		})
+	})
+
 	route("/games/{id}", func(r *response) {
 		r.RespondTo(RespondToMap{
 			"GET": func() {

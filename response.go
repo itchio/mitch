@@ -49,6 +49,11 @@ func (r *response) WriteError(status int, errors ...string) {
 	r.WriteJSON(payload)
 }
 
+func (r *response) WriteEmpty() {
+	r.status = 204
+	r.WriteHeader()
+}
+
 func (r *response) WriteJSON(payload interface{}) {
 	r.Header().Set("content-type", "application/json")
 	r.WriteHeader()
