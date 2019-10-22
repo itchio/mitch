@@ -11,6 +11,14 @@ func (u *Upload) CanBeViewedBy(user *User) bool {
 	return g.CanBeViewedBy(user)
 }
 
+func (s *UserGameSession) CanBeViewedBy(user *User) bool {
+	return s.CanBeEditedBy(user)
+}
+
+func (s *UserGameSession) CanBeEditedBy(user *User) bool {
+	return user.ID == s.UserID
+}
+
 func (g *Game) CanBeViewedBy(user *User) bool {
 	if g.CanBeEditedBy(user) {
 		return true

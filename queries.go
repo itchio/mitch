@@ -12,6 +12,10 @@ func (s *Store) FindUser(id int64) *User {
 	return s.Users[id]
 }
 
+func (s *Store) FindUserGameSession(id int64) *UserGameSession {
+	return s.UserGameSessions[id]
+}
+
 func (s *Store) FindGame(id int64) *Game {
 	return s.Games[id]
 }

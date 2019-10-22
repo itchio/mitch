@@ -6,13 +6,14 @@ import (
 )
 
 type Store struct {
-	Users      map[int64]*User
-	APIKeys    map[int64]*APIKey
-	Games      map[int64]*Game
-	Uploads    map[int64]*Upload
-	Builds     map[int64]*Build
-	BuildFiles map[int64]*BuildFile
-	GameAdmins map[int64]*GameAdmin
+	Users            map[int64]*User
+	APIKeys          map[int64]*APIKey
+	Games            map[int64]*Game
+	Uploads          map[int64]*Upload
+	Builds           map[int64]*Build
+	BuildFiles       map[int64]*BuildFile
+	GameAdmins       map[int64]*GameAdmin
+	UserGameSessions map[int64]*UserGameSession
 
 	CDNFiles map[string]*CDNFile
 
@@ -122,4 +123,14 @@ type CDNFile struct {
 	Filename string
 	Size     int64
 	Contents []byte
+}
+
+type UserGameSession struct {
+	Store *Store
+
+	ID         int64
+	GameID     int64
+	UserID     int64
+	Crashed    bool
+	SecondsRun int64
 }

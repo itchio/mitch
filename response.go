@@ -3,6 +3,7 @@ package mitch
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -133,6 +134,14 @@ func (r *response) CheckAPIKey() {
 	if r.currentUser == nil {
 		Throw(500, "api key has no user")
 	}
+}
+
+func (r *response) GetBody() Any {
+	body, err := ioutil.ReadAll(r.req.Body)
+	must(err)
+	var payload Any
+	must(json.Unmarshal(body, &payload))
+	return payload
 }
 
 func (r *response) AssertAuthorization(authorized bool) {

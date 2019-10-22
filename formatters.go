@@ -1,5 +1,7 @@
 package mitch
 
+import "time"
+
 func FormatUser(user *User) Any {
 	res := Any{
 		"id":           user.ID,
@@ -15,6 +17,17 @@ func FormatUser(user *User) Any {
 		res["allow_telemetry"] = true
 	}
 	return res
+}
+
+func FormatUserGameSession(s *UserGameSession) Any {
+	return Any{
+		"id":          s.ID,
+		"game_id":     s.GameID,
+		"user_id":     s.UserID,
+		"seconds_run": 0,
+		"last_run_at": time.Now(),
+		"crashed":     s.Crashed,
+	}
 }
 
 func FormatGame(game *Game) Any {

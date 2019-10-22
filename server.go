@@ -167,7 +167,56 @@ func (s *server) serve() {
 		r.RespondTo(RespondToMap{
 			"POST": func() {
 				r.CheckAPIKey()
-				r.WriteEmpty()
+				body := r.GetBody()
+
+				s := &UserGameSession{
+					ID:         r.store.serial(),
+					GameID:     body["game_id"].(int64),
+					UserID:     r.currentUser.ID,
+					Crashed:    false,
+					SecondsRun: 0,
+				}
+				r.WriteJSON(Any{
+					"user_game_session": FormatUserGameSession(s),
+				})
+			},
+		})
+	})
+
+	route("/profile/game-sessions/{id}", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+
+				s := r.store.FindUserGameSession(r.Int64Var("id"))
+				if s == nil {
+					r.WriteError(404, "not found")
+					return
+				}
+
+				r.AssertAuthorization(s.CanBeViewedBy(r.currentUser))
+				r.WriteJSON(Any{
+					"user_game_session": FormatUserGameSession(s),
+				})
+			},
+			"POST": func() {
+				r.CheckAPIKey()
+
+				s := r.store.FindUserGameSession(r.Int64Var("id"))
+				if s == nil {
+					r.WriteError(404, "not found")
+					return
+				}
+
+				r.AssertAuthorization(s.CanBeViewedBy(r.currentUser))
+				body := r.GetBody()
+				if sr, ok := body["seconds_run"].(int64); ok {
+					s.SecondsRun = sr
+				}
+
+				r.WriteJSON(Any{
+					"user_game_session": FormatUserGameSession(s),
+				})
 			},
 		})
 	})
