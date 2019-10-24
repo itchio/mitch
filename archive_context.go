@@ -55,7 +55,25 @@ func (ae *ArchiveEntry) String(s string) {
 
 func (ae *ArchiveEntry) Random(seed int64, size int64) {
 	rr := &randsource.Reader{Source: rand.NewSource(seed)}
-	io.CopyN(ae, rr, size)
+	_, err := io.CopyN(ae, rr, size)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type Chunk struct {
+	Seed int64
+	Size int64
+}
+
+func (ae *ArchiveEntry) Chunks(chunks []Chunk) {
+	for _, chunk := range chunks {
+		rr := &randsource.Reader{Source: rand.NewSource(chunk.Seed)}
+		_, err := io.CopyN(ae, rr, chunk.Size)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func (ae *ArchiveEntry) Write(p []byte) (int, error) {
