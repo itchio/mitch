@@ -12,7 +12,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var DEBUG = os.Getenv("MITCH_DEBUG") == "1"
+var DEBUG2 = os.Getenv("MITCH_DEBUG") == "2"
+var DEBUG = DEBUG2 || os.Getenv("MITCH_DEBUG") == "1"
 
 type response struct {
 	s      *server
@@ -206,7 +207,7 @@ func (r *response) ServeCDNAsset(ass cdnAsset) {
 }
 
 func debugf(s string, a ...interface{}) {
-	if DEBUG {
+	if DEBUG2 {
 		log.Printf("[mitch] %s", fmt.Sprintf(s, a...))
 	}
 }

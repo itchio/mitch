@@ -462,9 +462,9 @@ func (s *server) serve() {
 				r.WriteHeader()
 
 				src := bytes.NewReader(data)
-				r.s.Logf("Serving %s", f.Filename)
+				r.s.Debugf("Serving %s", f.Filename)
 				io.Copy(r.w, src)
-				r.s.Logf("Serving %s (done)", f.Filename)
+				r.s.Debugf("Serving %s (done)", f.Filename)
 			},
 		})
 	})
@@ -481,10 +481,18 @@ func (s *server) serve() {
 		consumer := s.consumer
 		s := bufio.NewScanner(pR)
 		for s.Scan() {
-			consumer.Infof(s.Text())
+			if DEBUG {
+				consumer.Debugf(s.Text())
+			}
 		}
 	}()
-	http.Serve(s.listener, loggedM)
+	must(http.Serve(s.listener, loggedM))
+}
+
+func (s *server) Debugf(format string, args ...interface{}) {
+	if DEBUG {
+		s.consumer.Debugf(format, args...)
+	}
 }
 
 func (s *server) Logf(format string, args ...interface{}) {
