@@ -486,7 +486,8 @@ func (s *server) serve() {
 			}
 		}
 	}()
-	must(http.Serve(s.listener, loggedM))
+	// we don't care about closed connections
+	_ = http.Serve(s.listener, loggedM)
 }
 
 func (s *server) Debugf(format string, args ...interface{}) {
