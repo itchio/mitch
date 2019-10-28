@@ -90,9 +90,10 @@ func FormatUploads(uploads []*Upload) []Any {
 
 func FormatBuild(build *Build) Any {
 	res := Any{
-		"id":        build.ID,
-		"upload_id": build.UploadID,
-		"version":   build.Version,
+		"id":              build.ID,
+		"parent_build_id": build.ParentBuildID,
+		"upload_id":       build.UploadID,
+		"version":         build.Version,
 	}
 	return res
 }

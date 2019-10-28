@@ -463,7 +463,8 @@ func (s *server) serve() {
 
 				src := bytes.NewReader(data)
 				r.s.Debugf("Serving %s", f.Filename)
-				io.Copy(r.w, src)
+				// ignore closed connections
+				_, _ = io.Copy(r.w, src)
 				r.s.Debugf("Serving %s (done)", f.Filename)
 			},
 		})
