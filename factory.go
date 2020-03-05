@@ -12,8 +12,8 @@ import (
 
 	"github.com/itchio/headway/state"
 
-	"github.com/itchio/lake/tlc"
 	"github.com/itchio/lake/pools/zippool"
+	"github.com/itchio/lake/tlc"
 
 	"github.com/itchio/wharf/pwr"
 	"github.com/itchio/wharf/wire"
@@ -209,7 +209,7 @@ func (bf *BuildFile) Sign() *BuildFile {
 	zr, err := zip.NewReader(bytes.NewReader(archiveCDNFile.Contents), archiveCDNFile.Size)
 	must(err)
 
-	container, err := tlc.WalkZip(zr, &tlc.WalkOpts{})
+	container, err := tlc.WalkZip(zr, tlc.WalkOpts{})
 	must(err)
 
 	pool := zippool.New(container, zr)
@@ -269,7 +269,7 @@ func (bf *BuildFile) Diff(parentBuild *Build) *BuildFile {
 	sourceZr, err := zip.NewReader(bytes.NewReader(archiveCDNFile.Contents), archiveCDNFile.Size)
 	must(err)
 
-	sourceContainer, err := tlc.WalkZip(sourceZr, &tlc.WalkOpts{})
+	sourceContainer, err := tlc.WalkZip(sourceZr, tlc.WalkOpts{})
 	must(err)
 
 	parentSig := parentBuild.GetFile("signature", "default")
