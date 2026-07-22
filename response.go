@@ -25,7 +25,7 @@ type response struct {
 	currentUser *User
 }
 
-type Any map[string]interface{}
+type Any map[string]any
 
 type APIError struct {
 	status   int
@@ -49,7 +49,7 @@ func (ae APIError) Error() string {
 
 func (r *response) WriteError(status int, errors ...string) {
 	r.status = status
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"errors": errors,
 	}
 	r.WriteJSON(payload)
@@ -60,17 +60,17 @@ func (r *response) WriteEmpty() {
 	r.WriteHeader()
 }
 
-func (r *response) WriteJSON(payload interface{}) {
-	r.Header().Set("content-type", "application/json")
-	r.WriteHeader()
-
+func (r *response) WriteJSON(payload any) {
 	bs, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		panic(err)
 	}
+
+	r.Header().Set("content-type", "application/json")
+	r.WriteHeader()
 	debugf("Replying with JSON payload: %s", string(bs))
 
-	r.Write(bs)
+	_, _ = r.w.Write(bs)
 }
 
 func (r *response) Header() http.Header {
@@ -106,10 +106,6 @@ func (r *response) RespondTo(m RespondToMap) {
 	} else {
 		Throw(400, "invalid method")
 	}
-}
-
-func (r *response) Write(p []byte) {
-	r.w.Write(p)
 }
 
 func (r *response) Int64Var(name string) int64 {
@@ -192,7 +188,7 @@ func (r *response) FindBuild(buildID int64) *Build {
 	return build
 }
 
-func (r *response) makeURL(format string, args ...interface{}) string {
+func (r *response) makeURL(format string, args ...any) string {
 	path := fmt.Sprintf(format, args...)
 	url := fmt.Sprintf("http://%s%s", r.s.Address().String(), path)
 	return url
@@ -206,7 +202,7 @@ func (r *response) ServeCDNAsset(ass cdnAsset) {
 	r.RedirectTo(r.makeURL("/@cdn%s", ass.CDNPath()))
 }
 
-func debugf(s string, a ...interface{}) {
+func debugf(s string, a ...any) {
 	if DEBUG2 {
 		log.Printf("[mitch] %s", fmt.Sprintf(s, a...))
 	}

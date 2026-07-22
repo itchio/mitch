@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/itchio/savior/seeksource"
 
@@ -304,7 +304,7 @@ func (bf *BuildFile) Diff(parentBuild *Build) *BuildFile {
 		TargetSignature: sigInfo.Hashes,
 	}
 	patchBuf := new(bytes.Buffer)
-	err = dctx.WritePatch(ctx, patchBuf, ioutil.Discard)
+	err = dctx.WritePatch(ctx, patchBuf, io.Discard)
 	must(err)
 
 	patchFile := b.MakeFile("patch", "default")

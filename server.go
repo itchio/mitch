@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,7 +19,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 type Server interface {
@@ -78,7 +78,7 @@ func NewServer(ctx context.Context, options ...ServerOpt) (Server, error) {
 
 	err := s.start()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, fmt.Errorf("start server: %w", err)
 	}
 
 	return s, nil
@@ -88,14 +88,14 @@ func (s *server) start() error {
 	addr := fmt.Sprintf("127.0.0.1:%d", s.opts.port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return errors.WithStack(err)
+		return fmt.Errorf("listen on %s: %w", addr, err)
 	}
 	s.listener = listener
 	s.address = listener.Addr()
 
 	go func() {
 		<-s.ctx.Done()
-		listener.Close()
+		_ = listener.Close()
 	}()
 
 	go s.serve()
@@ -126,14 +126,14 @@ func (s *server) serve() {
 				defer func() {
 					if r := recover(); r != nil {
 						if rErr, ok := r.(error); ok {
-							cause := errors.Cause(rErr)
-							if ae, ok := cause.(APIError); ok {
+							var ae APIError
+							if errors.As(rErr, &ae) {
 								res.WriteError(ae.status, ae.messages...)
 								return
 							}
 							retErr = rErr
 						} else {
-							retErr = errors.Errorf("panic: %+v", r)
+							retErr = fmt.Errorf("panic: %v", r)
 						}
 					}
 				}()
@@ -386,11 +386,7 @@ func (s *server) serve() {
 					Throw(404, "upgrade path not found")
 				}
 
-				// see https://github.com/golang/go/wiki/SliceTricks
-				for i := len(builds)/2 - 1; i >= 0; i-- {
-					opp := len(builds) - 1 - i
-					builds[i], builds[opp] = builds[opp], builds[i]
-				}
+				slices.Reverse(builds)
 
 				var formattedBuilds []Any
 				for _, b := range builds {
@@ -474,16 +470,16 @@ func (s *server) serve() {
 		Throw(404, "invalid api endpoint")
 	})
 
-	pR, pW, err := os.Pipe()
-	defer pW.Close()
-	must(err)
+	pR, pW := io.Pipe()
+	defer func() { _ = pW.Close() }()
 	loggedM := handlers.LoggingHandler(pW, m)
 	go func() {
+		defer func() { _ = pR.Close() }()
 		consumer := s.consumer
-		s := bufio.NewScanner(pR)
-		for s.Scan() {
+		scanner := bufio.NewScanner(pR)
+		for scanner.Scan() {
 			if DEBUG {
-				consumer.Debugf(s.Text())
+				consumer.Debugf("%s", scanner.Text())
 			}
 		}
 	}()
@@ -491,12 +487,12 @@ func (s *server) serve() {
 	_ = http.Serve(s.listener, loggedM)
 }
 
-func (s *server) Debugf(format string, args ...interface{}) {
+func (s *server) Debugf(format string, args ...any) {
 	if DEBUG {
 		s.consumer.Debugf(format, args...)
 	}
 }
 
-func (s *server) Logf(format string, args ...interface{}) {
+func (s *server) Logf(format string, args ...any) {
 	s.consumer.Infof(format, args...)
 }

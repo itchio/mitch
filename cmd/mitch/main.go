@@ -2,31 +2,25 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
-	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/itchio/mitch"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
-
-var (
-	app  = kingpin.New("mitch", "mitch is a (m)ock (itch).io server.")
-	port int
-)
-
-func flags() {
-	app.Flag("port", "Port to listen on").Short('p').Default("0").IntVar(&port)
-}
 
 func main() {
-	flags()
+	port := flag.Int("port", 0, "port to listen on")
+	flag.IntVar(port, "p", 0, "port to listen on (shorthand)")
+	flag.Parse()
 
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	ctx := context.Background()
-	s, err := mitch.NewServer(ctx, mitch.WithPort(port))
+	s, err := mitch.NewServer(ctx, mitch.WithPort(*port))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	log.Printf("Now listening on %s", s.Address())
 	log.Printf("(Ctrl+C to exit)")

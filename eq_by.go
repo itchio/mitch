@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type Eq map[string]interface{}
+type Eq map[string]any
 
 func (eq Eq) Match(el reflect.Value) bool {
 	for k, v := range eq {
@@ -58,7 +58,7 @@ type valueSort struct {
 }
 
 type ValuesSort struct {
-	m     interface{}
+	m     any
 	sorts []valueSort
 }
 
@@ -87,7 +87,7 @@ func (vsb *ValuesSortBuilder) ThenBy(fieldName string, dir string) *ValuesSortBu
 	return vsb
 }
 
-func (vsb *ValuesSortBuilder) ForMap(m interface{}) *ValuesSort {
+func (vsb *ValuesSortBuilder) ForMap(m any) *ValuesSort {
 	mapVal := reflect.ValueOf(m)
 	if mapVal.Type().Kind() != reflect.Map {
 		panic("Values needs a map")
@@ -96,7 +96,7 @@ func (vsb *ValuesSortBuilder) ForMap(m interface{}) *ValuesSort {
 	return &ValuesSort{m: m, sorts: vsb.sorts}
 }
 
-func (vs *ValuesSort) Apply() interface{} {
+func (vs *ValuesSort) Apply() any {
 	mapVal := reflect.ValueOf(vs.m)
 
 	elType := mapVal.Type().Elem()
