@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/itchio/savior/seeksource"
 
@@ -333,4 +334,21 @@ func (s *Store) UploadCDNFile(path string, filename string, contents []byte) *CD
 	}
 	s.CDNFiles[path] = f
 	return f
+}
+
+func (u *User) MakeGameSession(gameID int64, secondsRun int64, lastRunAt time.Time) *UserGameSession {
+	s := u.Store
+	s.writeMutex.Lock()
+	defer s.writeMutex.Unlock()
+
+	session := &UserGameSession{
+		Store:      s,
+		ID:         s.serial(),
+		GameID:     gameID,
+		UserID:     u.ID,
+		SecondsRun: secondsRun,
+		LastRunAt:  lastRunAt,
+	}
+	s.UserGameSessions[session.ID] = session
+	return session
 }

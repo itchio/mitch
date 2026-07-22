@@ -23,13 +23,14 @@ type Store struct {
 
 func newStore() *Store {
 	return &Store{
-		Users:      make(map[int64]*User),
-		APIKeys:    make(map[int64]*APIKey),
-		Games:      make(map[int64]*Game),
-		Uploads:    make(map[int64]*Upload),
-		Builds:     make(map[int64]*Build),
-		BuildFiles: make(map[int64]*BuildFile),
-		GameAdmins: make(map[int64]*GameAdmin),
+		Users:            make(map[int64]*User),
+		APIKeys:          make(map[int64]*APIKey),
+		Games:            make(map[int64]*Game),
+		Uploads:          make(map[int64]*Upload),
+		Builds:           make(map[int64]*Build),
+		BuildFiles:       make(map[int64]*BuildFile),
+		GameAdmins:       make(map[int64]*GameAdmin),
+		UserGameSessions: make(map[int64]*UserGameSession),
 
 		CDNFiles: make(map[string]*CDNFile),
 		idSeed:   10,
@@ -133,4 +134,5 @@ type UserGameSession struct {
 	UserID     int64
 	Crashed    bool
 	SecondsRun int64
+	LastRunAt  time.Time
 }

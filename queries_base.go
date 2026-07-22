@@ -97,3 +97,8 @@ func (s *Store) SelectGameAdmins(vsb *ValuesSortBuilder, eq Eq) (res []*GameAdmi
 	s.Select(&res, vsb.ForMap(s.GameAdmins), eq)
 	return
 }
+
+func (s *Store) SelectUserGameSessions(vsb *ValuesSortBuilder, eq Eq) (res []*UserGameSession) {
+	s.Select(&res, vsb.ForMap(s.UserGameSessions), eq)
+	return
+}

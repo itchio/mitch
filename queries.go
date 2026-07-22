@@ -16,6 +16,10 @@ func (s *Store) FindUserGameSession(id int64) *UserGameSession {
 	return s.UserGameSessions[id]
 }
 
+func (s *Store) ListUserGameSessionsByUserAndGame(userID int64, gameID int64) []*UserGameSession {
+	return s.SelectUserGameSessions(NoSort(), Eq{"UserID": userID, "GameID": gameID})
+}
+
 func (s *Store) FindGame(id int64) *Game {
 	return s.Games[id]
 }

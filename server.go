@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/itchio/headway/state"
@@ -169,16 +170,14 @@ func (s *server) serve() {
 			"POST": func() {
 				r.CheckAPIKey()
 
-				s := &UserGameSession{
-					ID:         r.store.serial(),
-					GameID:     r.Int64Param("game_id"),
-					UserID:     r.currentUser.ID,
-					Crashed:    false,
-					SecondsRun: 0,
-				}
+				s := r.currentUser.MakeGameSession(
+					r.Int64Param("game_id"),
+					r.Int64Param("seconds_run"),
+					time.Now(),
+				)
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
-					"summary":           FormatUserGameSummary(),
+					"summary":           FormatUserGameSummary(r.store, s.UserID, s.GameID),
 				})
 			},
 		})
@@ -198,7 +197,7 @@ func (s *server) serve() {
 				r.AssertAuthorization(s.CanBeViewedBy(r.currentUser))
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
-					"summary":           FormatUserGameSummary(),
+					"summary":           FormatUserGameSummary(r.store, s.UserID, s.GameID),
 				})
 			},
 			"POST": func() {
@@ -214,10 +213,22 @@ func (s *server) serve() {
 				if sr := r.Int64Param("seconds_run"); sr != 0 {
 					s.SecondsRun = sr
 				}
+				s.LastRunAt = time.Now()
 
 				r.WriteJSON(Any{
 					"user_game_session": FormatUserGameSession(s),
-					"summary":           FormatUserGameSummary(),
+					"summary":           FormatUserGameSummary(r.store, s.UserID, s.GameID),
+				})
+			},
+		})
+	})
+
+	route("/profile/game-sessions/summaries/{game_id}", func(r *response) {
+		r.RespondTo(RespondToMap{
+			"GET": func() {
+				r.CheckAPIKey()
+				r.WriteJSON(Any{
+					"summary": FormatUserGameSummary(r.store, r.currentUser.ID, r.Int64Var("game_id")),
 				})
 			},
 		})

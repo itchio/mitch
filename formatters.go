@@ -24,17 +24,30 @@ func FormatUserGameSession(s *UserGameSession) Any {
 		"id":          s.ID,
 		"game_id":     s.GameID,
 		"user_id":     s.UserID,
-		"seconds_run": 0,
-		"last_run_at": time.Now(),
+		"seconds_run": s.SecondsRun,
+		"last_run_at": s.LastRunAt,
 		"crashed":     s.Crashed,
 	}
 }
 
-func FormatUserGameSummary() Any {
-	return Any{
-		"seconds_run": 0,
-		"last_run_at": time.Now(),
+// FormatUserGameSummary aggregates all of a user's sessions for a game,
+// mirroring the itch.io summary payload.
+func FormatUserGameSummary(store *Store, userID int64, gameID int64) Any {
+	var secondsRun int64
+	var lastRunAt time.Time
+	for _, s := range store.ListUserGameSessionsByUserAndGame(userID, gameID) {
+		secondsRun += s.SecondsRun
+		if s.LastRunAt.After(lastRunAt) {
+			lastRunAt = s.LastRunAt
+		}
 	}
+	res := Any{
+		"seconds_run": secondsRun,
+	}
+	if !lastRunAt.IsZero() {
+		res["last_run_at"] = lastRunAt
+	}
+	return res
 }
 
 func FormatGame(game *Game) Any {
