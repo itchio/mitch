@@ -12,12 +12,12 @@ func Test_Select(t *testing.T) {
 
 	s := newStore()
 	var user *User
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		u := s.MakeUser(fmt.Sprintf("user %d", i))
 		if user == nil {
 			user = u
 		}
-		for j := 0; j < 4; j++ {
+		for j := range 4 {
 			u.MakeGame(fmt.Sprintf("game %d-%d", i, j))
 		}
 	}

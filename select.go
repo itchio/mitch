@@ -7,7 +7,7 @@ import (
 
 func (s *Store) SelectOne(dst any, src *ValuesSort, eq Eq) bool {
 	dstVal := reflect.ValueOf(dst)
-	if dstVal.Type().Kind() != reflect.Ptr {
+	if dstVal.Type().Kind() != reflect.Pointer {
 		panic("expected to selectOne into a pointer")
 	}
 
@@ -30,7 +30,7 @@ func (s *Store) SelectOne(dst any, src *ValuesSort, eq Eq) bool {
 
 func (s *Store) Select(dst any, src *ValuesSort, eq Eq) {
 	dstVal := reflect.ValueOf(dst)
-	if dstVal.Type().Kind() != reflect.Ptr {
+	if dstVal.Type().Kind() != reflect.Pointer {
 		panic("expected to select into a pointer to slice (not a ptr)")
 	}
 
