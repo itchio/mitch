@@ -1,7 +1,7 @@
 # mitch
 
-[![Build Status](https://travis-ci.org/itchio/mitch.svg?branch=master)](https://travis-ci.org/itchio/mitch)
-[![GoDoc](https://godoc.org/github.com/itchio/mitch?status.svg)](https://godoc.org/github.com/itchio/mitch)
+[![Test](https://github.com/itchio/mitch/actions/workflows/test.yml/badge.svg)](https://github.com/itchio/mitch/actions/workflows/test.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/itchio/mitch.svg)](https://pkg.go.dev/github.com/itchio/mitch)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/itchio/mitch/blob/master/LICENSE)
 [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
