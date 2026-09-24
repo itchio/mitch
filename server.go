@@ -154,6 +154,8 @@ func (s *server) serve() {
 		m.PathPrefix(prefix).Handler(handler(ch))
 	}
 
+	registerOAuthRoutes(route)
+
 	route("/profile", func(r *response) {
 		r.RespondTo(RespondToMap{
 			"GET": func() {

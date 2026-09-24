@@ -17,6 +17,9 @@ type Store struct {
 
 	CDNFiles map[string]*CDNFile
 
+	DeviceAuths map[string]*DeviceAuth
+	OAuthCodes  map[string]*OAuthCode
+
 	idSeed     int64
 	writeMutex sync.Mutex
 }
@@ -33,7 +36,11 @@ func newStore() *Store {
 		UserGameSessions: make(map[int64]*UserGameSession),
 
 		CDNFiles: make(map[string]*CDNFile),
-		idSeed:   10,
+
+		DeviceAuths: make(map[string]*DeviceAuth),
+		OAuthCodes:  make(map[string]*OAuthCode),
+
+		idSeed: 10,
 	}
 }
 
@@ -57,6 +64,8 @@ type APIKey struct {
 	Key       string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// What the client said about itself at the token exchange
+	DeviceInfo string
 }
 
 type Game struct {
