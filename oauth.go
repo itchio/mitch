@@ -172,13 +172,18 @@ func registerOAuthRoutes(route func(string, coolHandler)) {
 				if da == nil || da.ClientID != r.Param("client_id") {
 					Throw(400, "invalid_grant")
 				}
-				switch da.Status {
+				// tests flip the status via Approve/Deny/Expire while the client polls
+				r.store.writeMutex.Lock()
+				status, code := da.Status, da.Code
+				r.store.writeMutex.Unlock()
+
+				switch status {
 				case DeviceAuthPending:
 					r.WriteJSON(Any{"status": "pending", "interval": DeviceAuthInterval})
 				case DeviceAuthApproved:
-					r.WriteJSON(Any{"status": "approved", "code": da.Code})
+					r.WriteJSON(Any{"status": "approved", "code": code})
 				default:
-					r.WriteJSON(Any{"status": string(da.Status)})
+					r.WriteJSON(Any{"status": string(status)})
 				}
 			},
 		})
